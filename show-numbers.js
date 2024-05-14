@@ -21,12 +21,12 @@ async function showNumberTrivia(num) {
   const numTriviaText = numTrivia.text;
 
   // Log out the trivia fact of the num
-  console.log({ numTriviaText });
+  console.log({ showNumberTrivia: numTriviaText });
 
   return numTrivia;
 }
 
-//showNumberTrivia(42);
+showNumberTrivia(42);
 
 /** Get trivia info from Numbers API either from num1, num2, num3, or num4
  *
@@ -53,13 +53,21 @@ async function showNumberRace(num1, num2, num3, num4) {
   const numTrivia = await resp.json();
 
   const numTriviaText = numTrivia.text;
-  console.log({ numTriviaText });
+  console.log({ showNumberRace: numTriviaText });
 
   return numTrivia;
 }
 
 //showNumberRace(1, 2, 42, 4);
 
+/**
+ * Log trivia facts from num1, num2, num3, and num4 if resolved
+ * Get fact info from Numbers API
+ *
+ * If rejected, log out error message(s) ["Request failed with status code 404"]
+ *
+ * Returns list of trivia facts that were resolved
+ */
 async function showNumberAll(num1, num2, num3, num4) {
 
   const numP1 = fetch(`${URL_NUMBERS_API}/${num1}?json`);
@@ -69,14 +77,33 @@ async function showNumberAll(num1, num2, num3, num4) {
 
   const resps = await Promise.allSettled([numP1, numP2, numP3, numP4]);
 
-  for (const resp of resps) { }
+  const fulfilledTriviaTexts = [];
+  const rejections = [];
 
-  const numTrivia = await resps.json();
+  for (const resp of resps) {
 
-  const numTriviaText = numTrivia.text;
-  console.log({ numTriviaText });
+    if (resp.status === "fulfilled" && resp.value.ok === true) {
+      const numTrivia = await resp.value.json();
+      fulfilledTriviaTexts.push(numTrivia.text);
+    } else {
+      const resV = resp.value
+      console.warn(`GET ${resV.url} ${resV.status} (${resV.statusText})`)
+      rejections.push("Request failed with status code 404");
+    }
+  }
 
-  return numTrivia;
+  console.log("showNumberAll fulfilled:", fulfilledTriviaTexts);
+  console.log("showNumberAll rejected:", rejections);
+
+  return fulfilledTriviaTexts;
 }
 
-showNumberAll(1, 2, "wrong", 4);
+//showNumberAll(1, 2, "wrong", 4);
+
+async function main(){
+  await showNumberTrivia(96, "\n"); // TODO: new line here?
+  await showNumberRace(1, 2, 3, 4);
+  await showNumberAll(1, 2, "wrong", 4);
+}
+
+main();
