@@ -21,12 +21,12 @@ async function showNumberTrivia(num) {
   const numTriviaText = numTrivia.text;
 
   // Log out the trivia fact of the num
-  console.log({ showNumberTrivia: numTriviaText });
+  console.log({ showNumberTrivia: numTriviaText }, "\n");
 
   return numTrivia;
 }
 
-showNumberTrivia(42);
+//showNumberTrivia(42);
 
 /** Get trivia info from Numbers API either from num1, num2, num3, or num4
  *
@@ -53,7 +53,7 @@ async function showNumberRace(num1, num2, num3, num4) {
   const numTrivia = await resp.json();
 
   const numTriviaText = numTrivia.text;
-  console.log({ showNumberRace: numTriviaText });
+  console.log({ showNumberRace: numTriviaText }, "\n");
 
   return numTrivia;
 }
@@ -64,7 +64,9 @@ async function showNumberRace(num1, num2, num3, num4) {
  * Log trivia facts from num1, num2, num3, and num4 if resolved
  * Get fact info from Numbers API
  *
- * If rejected, log out error message(s) ["Request failed with status code 404"]
+ * If rejected, log out error message(s):
+ * GET http://numbersapi.com/<wrong>?json 404 (Not Found)
+ * ["Request failed with status code 404"]
  *
  * Returns list of trivia facts that were resolved
  */
@@ -75,19 +77,20 @@ async function showNumberAll(num1, num2, num3, num4) {
   const numP3 = fetch(`${URL_NUMBERS_API}/${num3}?json`);
   const numP4 = fetch(`${URL_NUMBERS_API}/${num4}?json`);
 
-  const resps = await Promise.allSettled([numP1, numP2, numP3, numP4]);
+  const respsWrapper = await Promise.allSettled([numP1, numP2, numP3, numP4]);
 
   const fulfilledTriviaTexts = [];
   const rejections = [];
 
-  for (const resp of resps) {
+  for (const respWrapper of respsWrapper) {
 
-    if (resp.status === "fulfilled" && resp.value.ok === true) {
-      const numTrivia = await resp.value.json();
+    if (respWrapper.status === "fulfilled" && respWrapper.value.ok === true) {
+      const numTrivia = await respWrapper.value.json();
       fulfilledTriviaTexts.push(numTrivia.text);
     } else {
-      const resV = resp.value
-      console.warn(`GET ${resV.url} ${resV.status} (${resV.statusText})`)
+      console.log(respWrapper)
+      const resp = respWrapper.value;
+      console.error(`GET ${resp.url} ${resp.status} (${resp.statusText})`);
       rejections.push("Request failed with status code 404");
     }
   }
@@ -100,10 +103,14 @@ async function showNumberAll(num1, num2, num3, num4) {
 
 //showNumberAll(1, 2, "wrong", 4);
 
-async function main(){
-  await showNumberTrivia(96, "\n"); // TODO: new line here?
+async function main() {
+  await showNumberTrivia(96);
   await showNumberRace(1, 2, 3, 4);
   await showNumberAll(1, 2, "wrong", 4);
 }
 
-main();
+await main();
+
+
+// waits for main to finish before continuing on!
+
